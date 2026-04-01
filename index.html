@@ -7,43 +7,78 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Crimson+Text:wght@400;600&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&amp;family=Crimson+Text:wght@400;600&amp;display=swap');
         
         :root {
             --gold: #d4af77;
         }
         
+        * {
+            transition-property: color, background-color, border-color, text-decoration-color, fill, stroke;
+            transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+            transition-duration: 150ms;
+        }
+        
         body {
             font-family: 'Crimson Text', serif;
         }
+        
         .header-font {
             font-family: 'Playfair Display', serif;
         }
+        
         .rosary-bg {
             background: radial-gradient(circle at center, #1a1a2e 0%, #0f0f1e 100%);
         }
+        
         .bead {
             animation: beadGlow 2s infinite alternate ease-in-out;
         }
+        
         @keyframes beadGlow {
             from { filter: drop-shadow(0 0 8px rgb(212 175 119)); }
             to { filter: drop-shadow(0 0 20px rgb(212 175 119)); }
         }
-        .speaking {
-            animation: speakingPulse 1.3s infinite alternate;
+        
+        .mystery-card {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
-        @keyframes speakingPulse {
-            from { opacity: 0.8; transform: scale(1); }
-            to { opacity: 1; transform: scale(1.03); }
+        
+        .mystery-card:hover {
+            transform: translateY(-4px) scale(1.03);
+            box-shadow: 0 20px 25px -5px rgb(212 175 119 / 0.2);
+        }
+        
+        .prayer-text {
+            font-size: 1.1rem;
+            line-height: 1.8;
+        }
+        
+        .modal {
+            animation: modalPop 0.3s ease-out;
+        }
+        
+        .progress-bead {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: #d4af77;
+            box-shadow: 0 0 15px #d4af77;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: #1a1a2e;
+            font-size: 12px;
+            font-weight: bold;
         }
     </style>
 </head>
 <body class="rosary-bg text-amber-100 min-h-screen">
-
     <!-- NAV -->
     <nav class="bg-[#1a1a2e]/90 backdrop-blur-lg border-b border-amber-300/30 sticky top-0 z-50">
         <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
             <div class="flex items-center gap-x-3">
+                <!-- SVG Rosary Icon -->
                 <svg xmlns="http://www.w3.org/2000/svg" class="w-10 h-10 text-amber-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <circle cx="12" cy="12" r="10" stroke-width="2"/>
                     <circle cx="8" cy="8" r="2" fill="#d4af77"/>
@@ -52,44 +87,318 @@
                     <circle cx="16" cy="16" r="2" fill="#d4af77"/>
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16"/>
                 </svg>
-                <h1 class="header-font text-3xl tracking-widest text-amber-300">THE ETERNAL ROSARY</h1>
+                <div>
+                    <h1 class="header-font text-3xl tracking-widest text-amber-300">THE ETERNAL ROSARY</h1>
+                    <p class="text-xs text-amber-400/80 tracking-[2px] -mt-1">Mysteries • Prayers • Grace</p>
+                </div>
             </div>
             
-            <button onclick="startPrayerMode()" 
-                    class="bg-amber-300 hover:bg-amber-400 text-[#1a1a2e] px-8 py-3 rounded-3xl font-semibold flex items-center gap-x-3">
-                <i class="fas fa-play-circle"></i> PRAY NOW
-            </button>
+            <div class="flex items-center gap-x-8 text-sm uppercase tracking-widest">
+                <a onclick="navigateToSection('home')" class="hover:text-amber-300 flex items-center gap-x-1">
+                    <i class="fas fa-home"></i>
+                    <span>Home</span>
+                </a>
+                <a onclick="navigateToSection('mysteries')" class="hover:text-amber-300 flex items-center gap-x-1">
+                    <i class="fas fa-pray"></i>
+                    <span>Mysteries</span>
+                </a>
+                <a onclick="navigateToSection('prayers')" class="hover:text-amber-300 flex items-center gap-x-1">
+                    <i class="fas fa-book-open"></i>
+                    <span>Prayers</span>
+                </a>
+                <a onclick="startPrayerMode()" class="bg-amber-300 hover:bg-amber-400 text-[#1a1a2e] px-6 py-2 rounded-3xl font-semibold flex items-center gap-x-2">
+                    <i class="fas fa-play-circle"></i>
+                    <span>PRAY NOW</span>
+                </a>
+            </div>
+            
+            <div class="flex items-center gap-x-2 text-amber-300">
+                <div class="text-xs bg-[#1a1a2e] px-3 py-1 rounded-3xl border border-amber-300/30">
+                    Today is <span id="today-day" class="font-bold"></span>
+                </div>
+                <button onclick="toggleSound()" class="w-9 h-9 rounded-2xl flex items-center justify-center hover:bg-amber-300/10">
+                    <i id="sound-icon" class="fas fa-volume-up"></i>
+                </button>
+            </div>
         </div>
     </nav>
 
-    <!-- PRAYER MODE -->
-    <div id="prayer-mode" class="hidden fixed inset-0 bg-[#0a0a14] z-[10000] flex items-center justify-center">
-        <div onclick="event.stopImmediatePropagation()" class="max-w-4xl w-full mx-6 bg-[#1a1a2e] rounded-3xl overflow-hidden">
-            
-            <!-- Header -->
-            <div class="bg-gradient-to-r from-amber-300/10 to-transparent px-8 py-6 flex items-center justify-between border-b border-amber-300/20">
-                <div class="flex items-center gap-x-4">
-                    <span id="current-set-badge" class="px-4 py-1 text-xs rounded-3xl font-bold bg-emerald-400 text-black"></span>
-                    <h2 id="current-mystery-title" class="header-font text-3xl"></h2>
+    <!-- HERO / HOME -->
+    <section id="home" class="max-w-7xl mx-auto px-6 py-16">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            <div class="space-y-6">
+                <div class="inline-flex items-center bg-amber-300/10 text-amber-300 text-sm px-5 py-2 rounded-3xl mb-4">
+                    <span class="relative flex h-3 w-3 mr-2">
+                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                        <span class="relative inline-flex rounded-full h-3 w-3 bg-amber-400"></span>
+                    </span>
+                    LIVE IN GRACE • 2026
                 </div>
-                <div class="flex items-center gap-x-4">
-                    <button onclick="toggleAutoplay()" id="autoplay-btn"
-                            class="px-6 py-2 text-xs rounded-3xl border flex items-center gap-x-2 font-medium">
-                        <i class="fas fa-play"></i> <span id="autoplay-text">AUTOPLAY OFF</span>
+                
+                <h2 class="header-font text-6xl leading-none tracking-tighter">
+                    Hold the beads.<br>Touch the mysteries.<br>Feel the peace.
+                </h2>
+                
+                <p class="text-xl text-amber-200/90 max-w-md">
+                    A beautiful digital sanctuary for the Holy Rosary. 
+                    All four sets of mysteries. Every traditional prayer. 
+                    Designed to help you pray with focus and beauty.
+                </p>
+                
+                <div class="flex gap-4">
+                    <button onclick="startPrayerMode()" 
+                            class="bg-gradient-to-r from-amber-300 to-yellow-300 text-[#1a1a2e] px-8 py-4 rounded-3xl text-lg font-semibold flex items-center gap-x-3 hover:scale-105">
+                        <i class="fas fa-beads"></i>
+                        BEGIN YOUR ROSARY
                     </button>
-                    <button onclick="toggleVoice()" id="voice-btn"
-                            class="px-6 py-2 text-xs rounded-3xl border flex items-center gap-x-2">
-                        <i class="fas fa-microphone"></i> <span id="voice-text">VOCALS ON</span>
+                    <button onclick="navigateToSection('mysteries')" 
+                            class="border border-amber-300/70 hover:border-amber-300 px-8 py-4 rounded-3xl text-lg flex items-center gap-x-3">
+                        EXPLORE MYSTERIES
                     </button>
-                    <button onclick="endPrayerMode()" class="text-3xl text-amber-300/70 hover:text-red-400">✕</button>
+                </div>
+                
+                <!-- Creative floating beads -->
+                <div class="flex gap-4 text-4xl pt-8">
+                    <div class="bead">◉</div>
+                    <div class="bead" style="animation-delay: 300ms">◉</div>
+                    <div class="bead" style="animation-delay: 600ms">◉</div>
+                    <div class="bead" style="animation-delay: 900ms">◉</div>
+                    <div class="bead" style="animation-delay: 1200ms">◉</div>
+                    <span class="text-amber-300/40 text-2xl self-end pb-2">✝️</span>
                 </div>
             </div>
             
+            <div class="relative">
+                <div class="absolute inset-0 bg-gradient-to-br from-amber-300/10 to-transparent rounded-[4rem] rotate-6"></div>
+                <div class="bg-[#1a1a2e] rounded-3xl p-8 shadow-2xl border border-amber-300/30 relative">
+                    <div class="flex justify-center mb-6">
+                        <div class="flex gap-1">
+                            <!-- Simulated rosary chain -->
+                            <div class="h-2 w-12 bg-gradient-to-r from-amber-300/30 to-amber-300 rounded-full self-center"></div>
+                            <div class="flex gap-3">
+                                <div class="w-8 h-8 rounded-full bg-amber-300 flex items-center justify-center text-[#1a1a2e] text-xl">1</div>
+                                <div class="w-8 h-8 rounded-full bg-amber-300 flex items-center justify-center text-[#1a1a2e] text-xl">2</div>
+                                <div class="w-8 h-8 rounded-full bg-amber-300 flex items-center justify-center text-[#1a1a2e] text-xl">3</div>
+                                <div class="w-8 h-8 rounded-full bg-amber-300 flex items-center justify-center text-[#1a1a2e] text-xl">4</div>
+                                <div class="w-8 h-8 rounded-full bg-amber-300 flex items-center justify-center text-[#1a1a2e] text-xl">5</div>
+                            </div>
+                            <div class="h-2 w-12 bg-gradient-to-r from-amber-300 to-amber-300/30 rounded-full self-center"></div>
+                        </div>
+                    </div>
+                    <p class="text-center text-amber-400 italic text-lg">"The Rosary is the most beautiful and most rich in graces of all prayers; it is the prayer that touches the heart of the Mother of God..."</p>
+                    <p class="text-center text-xs text-amber-300/60 mt-4">— Pope Saint John Paul II</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- MYSTERIES SECTION -->
+    <section id="mysteries" class="max-w-7xl mx-auto px-6 py-16 bg-[#0f0f1e]/60">
+        <div class="text-center mb-12">
+            <span class="px-6 py-2 bg-amber-300/10 text-amber-300 rounded-3xl text-sm tracking-widest">THE FOUR CROWNS OF THE ROSARY</span>
+            <h2 class="header-font text-5xl mt-4">All Mysteries • All Days • All Grace</h2>
+            <p class="text-amber-200/70 mt-3 max-w-lg mx-auto">Click any mystery set to dive deeper. Each contains five sacred moments from the life of Christ and Mary.</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <!-- Joyful -->
+            <div onclick="showMysterySet(0)" class="mystery-card bg-[#1a1a2e] border border-amber-300/20 rounded-3xl p-6 cursor-pointer hover:border-amber-300">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <span class="text-xs uppercase tracking-widest text-emerald-400">Mon &amp; Sat</span>
+                        <h3 class="header-font text-3xl text-emerald-300">Joyful Mysteries</h3>
+                    </div>
+                    <i class="fas fa-heart text-4xl text-emerald-400/30"></i>
+                </div>
+                <ul class="mt-6 space-y-3 text-sm">
+                    <li class="flex gap-3"><span class="text-emerald-400">1.</span> The Annunciation</li>
+                    <li class="flex gap-3"><span class="text-emerald-400">2.</span> The Visitation</li>
+                    <li class="flex gap-3"><span class="text-emerald-400">3.</span> The Nativity of Jesus</li>
+                    <li class="flex gap-3"><span class="text-emerald-400">4.</span> The Presentation in the Temple</li>
+                    <li class="flex gap-3"><span class="text-emerald-400">5.</span> The Finding in the Temple</li>
+                </ul>
+                <div class="mt-8 text-xs flex justify-end text-emerald-400">5 decades of joy ✨</div>
+            </div>
+
+            <!-- Luminous -->
+            <div onclick="showMysterySet(1)" class="mystery-card bg-[#1a1a2e] border border-amber-300/20 rounded-3xl p-6 cursor-pointer hover:border-amber-300">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <span class="text-xs uppercase tracking-widest text-amber-400">Thursdays</span>
+                        <h3 class="header-font text-3xl text-amber-300">Luminous Mysteries</h3>
+                    </div>
+                    <i class="fas fa-lightbulb text-4xl text-amber-400/30"></i>
+                </div>
+                <ul class="mt-6 space-y-3 text-sm">
+                    <li class="flex gap-3"><span class="text-amber-400">1.</span> Baptism of Jesus in the Jordan</li>
+                    <li class="flex gap-3"><span class="text-amber-400">2.</span> The Wedding at Cana</li>
+                    <li class="flex gap-3"><span class="text-amber-400">3.</span> Proclamation of the Kingdom</li>
+                    <li class="flex gap-3"><span class="text-amber-400">4.</span> The Transfiguration</li>
+                    <li class="flex gap-3"><span class="text-amber-400">5.</span> Institution of the Eucharist</li>
+                </ul>
+                <div class="mt-8 text-xs flex justify-end text-amber-400">5 decades of light ✨</div>
+            </div>
+
+            <!-- Sorrowful -->
+            <div onclick="showMysterySet(2)" class="mystery-card bg-[#1a1a2e] border border-amber-300/20 rounded-3xl p-6 cursor-pointer hover:border-amber-300">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <span class="text-xs uppercase tracking-widest text-red-400">Tue &amp; Fri</span>
+                        <h3 class="header-font text-3xl text-red-300">Sorrowful Mysteries</h3>
+                    </div>
+                    <i class="fas fa-cross text-4xl text-red-400/30"></i>
+                </div>
+                <ul class="mt-6 space-y-3 text-sm">
+                    <li class="flex gap-3"><span class="text-red-400">1.</span> The Agony in the Garden</li>
+                    <li class="flex gap-3"><span class="text-red-400">2.</span> The Scourging at the Pillar</li>
+                    <li class="flex gap-3"><span class="text-red-400">3.</span> The Crowning with Thorns</li>
+                    <li class="flex gap-3"><span class="text-red-400">4.</span> The Carrying of the Cross</li>
+                    <li class="flex gap-3"><span class="text-red-400">5.</span> The Crucifixion</li>
+                </ul>
+                <div class="mt-8 text-xs flex justify-end text-red-400">5 decades of redemption ✨</div>
+            </div>
+
+            <!-- Glorious -->
+            <div onclick="showMysterySet(3)" class="mystery-card bg-[#1a1a2e] border border-amber-300/20 rounded-3xl p-6 cursor-pointer hover:border-amber-300">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <span class="text-xs uppercase tracking-widest text-purple-400">Wed &amp; Sun</span>
+                        <h3 class="header-font text-3xl text-purple-300">Glorious Mysteries</h3>
+                    </div>
+                    <i class="fas fa-crown text-4xl text-purple-400/30"></i>
+                </div>
+                <ul class="mt-6 space-y-3 text-sm">
+                    <li class="flex gap-3"><span class="text-purple-400">1.</span> The Resurrection</li>
+                    <li class="flex gap-3"><span class="text-purple-400">2.</span> The Ascension</li>
+                    <li class="flex gap-3"><span class="text-purple-400">3.</span> The Descent of the Holy Spirit</li>
+                    <li class="flex gap-3"><span class="text-purple-400">4.</span> The Assumption of Mary</li>
+                    <li class="flex gap-3"><span class="text-purple-400">5.</span> The Coronation of Mary</li>
+                </ul>
+                <div class="mt-8 text-xs flex justify-end text-purple-400">5 decades of glory ✨</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- PRAYERS SECTION -->
+    <section id="prayers" class="max-w-7xl mx-auto px-6 py-16">
+        <div class="text-center mb-12">
+            <h2 class="header-font text-5xl">The Traditional Prayers</h2>
+            <p class="text-amber-200/70">Every word you will speak while holding the beads</p>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <!-- Apostles' Creed -->
+            <div class="bg-[#1a1a2e] rounded-3xl p-8">
+                <div class="flex items-center gap-x-4 mb-6">
+                    <i class="fas fa-cross text-3xl text-amber-300"></i>
+                    <div class="uppercase text-xs tracking-widest">Introductory Prayer</div>
+                </div>
+                <h4 class="text-2xl header-font mb-4">Apostles’ Creed</h4>
+                <p class="prayer-text text-amber-200/90">I believe in God, the Father almighty, Creator of heaven and earth, and in Jesus Christ, his only Son, our Lord, who was conceived by the Holy Spirit, born of the Virgin Mary, suffered under Pontius Pilate, was crucified, died and was buried; he descended into hell; on the third day he rose again from the dead; he ascended into heaven, and is seated at the right hand of God the Father almighty; from there he will come to judge the living and the dead. I believe in the Holy Spirit, the holy catholic Church, the communion of saints, the forgiveness of sins, the resurrection of the body, and life everlasting. Amen.</p>
+            </div>
+
+            <!-- Our Father -->
+            <div class="bg-[#1a1a2e] rounded-3xl p-8">
+                <div class="flex items-center gap-x-4 mb-6">
+                    <i class="fas fa-hands-praying text-3xl text-amber-300"></i>
+                    <div class="uppercase text-xs tracking-widest">Our Father</div>
+                </div>
+                <h4 class="text-2xl header-font mb-4">Our Father (Lord’s Prayer)</h4>
+                <p class="prayer-text text-amber-200/90">Our Father, who art in heaven, hallowed be thy name; thy kingdom come; thy will be done on earth as it is in heaven. Give us this day our daily bread; and forgive us our trespasses as we forgive those who trespass against us; and lead us not into temptation, but deliver us from evil. Amen.</p>
+            </div>
+
+            <!-- Hail Mary -->
+            <div class="bg-[#1a1a2e] rounded-3xl p-8">
+                <div class="flex items-center gap-x-4 mb-6">
+                    <i class="fas fa-pray text-3xl text-amber-300"></i>
+                    <div class="uppercase text-xs tracking-widest">Hail Mary × 10 per decade</div>
+                </div>
+                <h4 class="text-2xl header-font mb-4">Hail Mary</h4>
+                <p class="prayer-text text-amber-200/90">Hail Mary, full of grace, the Lord is with thee. Blessed art thou among women, and blessed is the fruit of thy womb, Jesus. Holy Mary, Mother of God, pray for us sinners, now and at the hour of our death. Amen.</p>
+            </div>
+
+            <!-- Glory Be -->
+            <div class="bg-[#1a1a2e] rounded-3xl p-8">
+                <div class="flex items-center gap-x-4 mb-6">
+                    <i class="fas fa-star text-3xl text-amber-300"></i>
+                    <div class="uppercase text-xs tracking-widest">After each decade</div>
+                </div>
+                <h4 class="text-2xl header-font mb-4">Glory Be</h4>
+                <p class="prayer-text text-amber-200/90">Glory be to the Father, and to the Son, and to the Holy Spirit. As it was in the beginning, is now, and ever shall be, world without end. Amen.</p>
+            </div>
+
+            <!-- Fatima Prayer -->
+            <div class="bg-[#1a1a2e] rounded-3xl p-8">
+                <div class="flex items-center gap-x-4 mb-6">
+                    <i class="fas fa-heart text-3xl text-amber-300"></i>
+                    <div class="uppercase text-xs tracking-widest">O My Jesus</div>
+                </div>
+                <h4 class="text-2xl header-font mb-4">Fatima Prayer (O My Jesus)</h4>
+                <p class="prayer-text text-amber-200/90">O my Jesus, forgive us our sins, save us from the fires of hell; lead all souls to Heaven, especially those who have most need of thy mercy. Amen.</p>
+            </div>
+
+            <!-- Salve Regina -->
+            <div class="bg-[#1a1a2e] rounded-3xl p-8">
+                <div class="flex items-center gap-x-4 mb-6">
+                    <i class="fas fa-crown text-3xl text-amber-300"></i>
+                    <div class="uppercase text-xs tracking-widest">Concluding Prayer</div>
+                </div>
+                <h4 class="text-2xl header-font mb-4">Hail, Holy Queen (Salve Regina)</h4>
+                <p class="prayer-text text-amber-200/90">Hail, Holy Queen, Mother of Mercy, our life, our sweetness, and our hope. To thee do we cry, poor banished children of Eve. To thee do we send up our sighs, mourning and weeping in this valley of tears. Turn then, most gracious Advocate, thine eyes of mercy toward us, and after this our exile, show unto us the blessed fruit of thy womb, Jesus. O clement, O loving, O sweet Virgin Mary. Pray for us, O holy Mother of God, that we may be made worthy of the promises of Christ. Amen.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- MYSTERY MODAL -->
+    <div onclick="if(event.target.id === 'mystery-modal') hideModal()" id="mystery-modal" class="hidden fixed inset-0 bg-black/70 flex items-center justify-center z-[9999]">
+        <div onclick="event.stopImmediatePropagation()" class="modal bg-[#1a1a2e] max-w-2xl w-full mx-4 rounded-3xl p-8">
+            <div class="flex justify-between mb-6">
+                <div id="modal-set-name" class="header-font text-3xl"></div>
+                <button onclick="hideModal()" class="text-4xl text-amber-300/60 hover:text-amber-300">×</button>
+            </div>
+            
+            <div id="modal-mysteries-list" class="space-y-6"></div>
+            
+            <div class="mt-10 flex justify-center">
+                <button onclick="hideModal(); startPrayerMode()" 
+                        class="px-12 py-4 bg-gradient-to-r from-amber-300 to-yellow-300 text-[#1a1a2e] rounded-3xl font-semibold flex items-center gap-x-2 text-lg">
+                    <i class="fas fa-play"></i>
+                    PRAY THIS SET NOW
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- PRAYER MODE OVERLAY -->
+    <div id="prayer-mode" onclick="if(event.target.id === 'prayer-mode') endPrayerMode()" class="hidden fixed inset-0 bg-[#0a0a14] z-[10000] flex items-center justify-center">
+        <div onclick="event.stopImmediatePropagation()" class="max-w-4xl w-full mx-6 bg-[#1a1a2e] rounded-3xl overflow-hidden">
+            <!-- Header -->
+            <div class="bg-gradient-to-r from-amber-300/10 to-transparent px-8 py-6 flex items-center justify-between border-b border-amber-300/20">
+                <div class="flex items-center gap-x-4">
+                    <span id="current-set-badge" class="px-4 py-1 text-xs rounded-3xl font-bold"></span>
+                    <h2 id="current-mystery-title" class="header-font text-3xl"></h2>
+                </div>
+                <div class="flex items-center gap-x-6">
+                    <button onclick="endPrayerMode()" class="flex items-center text-amber-300/70 hover:text-amber-300">
+                        <i class="fas fa-times mr-2"></i> CLOSE
+                    </button>
+                    <div class="text-xs text-amber-400 flex items-center gap-x-1">
+                        <span id="decade-counter">DECADE 1 / 5</span>
+                        <div class="w-px h-3 bg-amber-400/40"></div>
+                        <span id="prayer-step">Introductory Prayers</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Content -->
             <div class="p-8">
-                <div id="meditation-text" class="italic text-amber-200/80 text-xl border-l-4 border-amber-300 pl-6 py-1 mb-10 min-h-[100px]"></div>
+                <!-- Meditation -->
+                <div id="meditation-text" class="italic text-amber-200/80 text-xl border-l-4 border-amber-300 pl-6 py-1 mb-10 min-h-[120px]"></div>
                 
+                <!-- Current Prayer -->
                 <div id="current-prayer-display" class="min-h-[180px] text-2xl leading-relaxed prayer-text mb-8"></div>
                 
+                <!-- Hail Mary Counter (only shows during Hail Marys) -->
                 <div id="hail-counter" class="hidden mb-8">
                     <div class="flex justify-between text-xs uppercase mb-3">
                         <span>Hail Marys prayed</span>
@@ -98,6 +407,7 @@
                     <div class="flex gap-3 flex-wrap" id="bead-row"></div>
                 </div>
                 
+                <!-- Action buttons -->
                 <div class="flex gap-4 justify-center">
                     <button onclick="prevStep()" 
                             class="px-8 py-4 border border-amber-300/50 rounded-3xl flex items-center">
@@ -106,111 +416,276 @@
                     <button onclick="nextStep()" id="next-btn"
                             class="flex-1 max-w-xs bg-amber-300 text-[#1a1a2e] py-4 rounded-3xl font-semibold text-xl flex items-center justify-center">
                         <span id="next-text">NEXT PRAYER</span>
+                        <i id="next-icon" class="fas fa-chevron-right ml-3"></i>
                     </button>
                 </div>
             </div>
             
-            <div class="bg-[#0f0f1e] px-8 py-4 flex justify-center gap-2" id="progress-dots"></div>
+            <!-- Rosary progress footer -->
+            <div class="bg-[#0f0f1e] px-8 py-4 flex items-center justify-between text-xs">
+                <div class="flex items-center gap-x-2">
+                    <span class="text-amber-400">ROSARY PROGRESS</span>
+                </div>
+                <div id="progress-dots" class="flex gap-2"></div>
+                <div onclick="endPrayerMode()" class="cursor-pointer text-amber-400 hover:text-amber-300">Finish &amp; Receive Grace</div>
+            </div>
         </div>
     </div>
 
     <script>
+        // Tailwind script initialization
+        function initializeTailwind() {
+            return {
+                config(userConfig = {}) {
+                    return {
+                        configUser: userConfig,
+                        theme: {
+                            extend: {},
+                        },
+                    }
+                },
+                theme: {
+                    extend: {},
+                },
+            }
+        }
+        
+        // Content data
         const mysteriesData = [
-            { name: "Joyful Mysteries", color: "emerald", mysteries: ["The Annunciation", "The Visitation", "The Nativity", "The Presentation", "The Finding in the Temple"] },
-            { name: "Luminous Mysteries", color: "amber", mysteries: ["Baptism of Jesus", "Wedding at Cana", "Proclamation of the Kingdom", "The Transfiguration", "Institution of the Eucharist"] },
-            { name: "Sorrowful Mysteries", color: "red", mysteries: ["The Agony in the Garden", "The Scourging at the Pillar", "The Crowning with Thorns", "The Carrying of the Cross", "The Crucifixion"] },
-            { name: "Glorious Mysteries", color: "purple", mysteries: ["The Resurrection", "The Ascension", "The Descent of the Holy Spirit", "The Assumption of Mary", "The Coronation of Mary"] }
+            {
+                name: "Joyful Mysteries",
+                color: "emerald",
+                day: "Mondays & Saturdays",
+                mysteries: [
+                    { title: "The Annunciation", desc: "The angel Gabriel announces to Mary that she will conceive the Son of God." },
+                    { title: "The Visitation", desc: "Mary visits her cousin Elizabeth, who is pregnant with John the Baptist." },
+                    { title: "The Nativity", desc: "Jesus is born in Bethlehem in a humble stable." },
+                    { title: "The Presentation", desc: "Mary and Joseph present the infant Jesus in the Temple." },
+                    { title: "The Finding in the Temple", desc: "Mary and Joseph find the twelve-year-old Jesus teaching in the Temple." }
+                ]
+            },
+            {
+                name: "Luminous Mysteries",
+                color: "amber",
+                day: "Thursdays",
+                mysteries: [
+                    { title: "The Baptism of Jesus", desc: "Jesus is baptized by John in the Jordan River." },
+                    { title: "The Wedding at Cana", desc: "Jesus performs his first miracle, turning water into wine." },
+                    { title: "Proclamation of the Kingdom", desc: "Jesus calls all to conversion and announces the Kingdom of God." },
+                    { title: "The Transfiguration", desc: "Jesus is transfigured on the mountain before Peter, James, and John." },
+                    { title: "Institution of the Eucharist", desc: "Jesus institutes the Sacrament of the Eucharist at the Last Supper." }
+                ]
+            },
+            {
+                name: "Sorrowful Mysteries",
+                color: "red",
+                day: "Tuesdays & Fridays",
+                mysteries: [
+                    { title: "The Agony in the Garden", desc: "Jesus prays in Gethsemane and accepts the Father’s will." },
+                    { title: "The Scourging at the Pillar", desc: "Jesus is whipped at the pillar by the Roman soldiers." },
+                    { title: "The Crowning with Thorns", desc: "Jesus is mocked and crowned with thorns." },
+                    { title: "The Carrying of the Cross", desc: "Jesus carries his cross to Calvary." },
+                    { title: "The Crucifixion", desc: "Jesus is nailed to the cross and dies for our sins." }
+                ]
+            },
+            {
+                name: "Glorious Mysteries",
+                color: "purple",
+                day: "Wednesdays & Sundays",
+                mysteries: [
+                    { title: "The Resurrection", desc: "Jesus rises from the dead on the third day." },
+                    { title: "The Ascension", desc: "Jesus ascends into heaven forty days after the Resurrection." },
+                    { title: "The Descent of the Holy Spirit", desc: "The Holy Spirit descends upon the Apostles at Pentecost." },
+                    { title: "The Assumption of Mary", desc: "Mary is taken body and soul into heaven." },
+                    { title: "The Coronation of Mary", desc: "Mary is crowned Queen of Heaven and Earth." }
+                ]
+            }
         ]
-
+        
+        const prayerSequence = [
+            { type: "creed", text: "Apostles’ Creed<br><br>I believe in God, the Father almighty..." },
+            { type: "our-father", text: "Our Father, who art in heaven..." },
+            { type: "hail", text: "Hail Mary, full of grace..." },
+            { type: "hail", text: "Hail Mary, full of grace..." },
+            { type: "hail", text: "Hail Mary, full of grace..." },
+            { type: "glory", text: "Glory be to the Father..." },
+            { type: "fatima", text: "O my Jesus, forgive us our sins..." },
+            // Decade 1
+            { type: "mystery-start", text: "" },
+            { type: "our-father", text: "Our Father, who art in heaven..." },
+            { type: "hail", text: "Hail Mary, full of grace..." }, // 10 times
+            { type: "hail", text: "Hail Mary, full of grace..." },
+            { type: "hail", text: "Hail Mary, full of grace..." },
+            { type: "hail", text: "Hail Mary, full of grace..." },
+            { type: "hail", text: "Hail Mary, full of grace..." },
+            { type: "hail", text: "Hail Mary, full of grace..." },
+            { type: "hail", text: "Hail Mary, full of grace..." },
+            { type: "hail", text: "Hail Mary, full of grace..." },
+            { type: "hail", text: "Hail Mary, full of grace..." },
+            { type: "hail", text: "Hail Mary, full of grace..." },
+            { type: "glory", text: "Glory be to the Father..." },
+            { type: "fatima", text: "O my Jesus, forgive us our sins..." },
+            // Decade 2-5 will be dynamically added in JS
+            { type: "conclusion", text: "Hail Holy Queen..." }
+        ]
+        
         let currentSetIndex = 0
         let currentDecade = 0
         let currentStep = 0
         let hailCount = 0
-        let autoplay = false
-        let voiceEnabled = true
-        let autoplayTimeout = null
-
+        let currentPrayerModeSet = null
+        
+        function navigateToSection(section) {
+            document.querySelectorAll('section').forEach(s => s.classList.add('hidden'))
+            const target = document.getElementById(section)
+            if (target) target.classList.remove('hidden')
+            window.scrollTo({ top: 0, behavior: 'smooth' })
+        }
+        
+        function showMysterySet(index) {
+            currentSetIndex = index
+            const set = mysteriesData[index]
+            const modal = document.getElementById('mystery-modal')
+            const nameEl = document.getElementById('modal-set-name')
+            const listEl = document.getElementById('modal-mysteries-list')
+            
+            nameEl.innerHTML = `${set.name} <span class="text-xs uppercase text-${set.color}-400 ml-3">${set.day}</span>`
+            listEl.innerHTML = ''
+            
+            set.mysteries.forEach((m, i) => {
+                const div = document.createElement('div')
+                div.className = `flex gap-6 border-b border-amber-300/10 pb-6 last:border-none last:pb-0`
+                div.innerHTML = `
+                    <div class="text-5xl font-bold text-${set.color}-400/30 w-8">${i+1}</div>
+                    <div>
+                        <div class="text-xl header-font">${m.title}</div>
+                        <p class="text-amber-200/70 mt-2">${m.desc}</p>
+                    </div>
+                `
+                listEl.appendChild(div)
+            })
+            
+            modal.classList.remove('hidden')
+            modal.classList.add('flex')
+        }
+        
+        function hideModal() {
+            const modal = document.getElementById('mystery-modal')
+            modal.classList.add('hidden')
+            modal.classList.remove('flex')
+        }
+        
         function startPrayerMode() {
-            currentSetIndex = currentSetIndex || 0
+            currentSetIndex = currentSetIndex || 0 // default to Joyful
+            currentPrayerModeSet = mysteriesData[currentSetIndex]
             currentDecade = 0
             currentStep = 0
             hailCount = 0
-
-            document.getElementById('prayer-mode').classList.remove('hidden')
-            document.getElementById('prayer-mode').classList.add('flex')
-            updatePrayerUI()
-        }
-
-        function endPrayerMode() {
-            document.getElementById('prayer-mode').classList.add('hidden')
-            document.getElementById('prayer-mode').classList.remove('flex')
-            if (autoplayTimeout) clearTimeout(autoplayTimeout)
-        }
-
-        function updatePrayerUI() {
-            const set = mysteriesData[currentSetIndex]
-            document.getElementById('current-set-badge').className = `px-4 py-1 text-xs rounded-3xl font-bold bg-${set.color}-400 text-black`
-            document.getElementById('current-set-badge').textContent = set.name
-
-            let title = currentDecade === 0 ? "Introductory Prayers" : 
-                        currentDecade > 5 ? "Concluding Prayers" : 
-                        `Decade ${currentDecade} — ${set.mysteries[currentDecade-1]}`
             
-            document.getElementById('current-mystery-title').textContent = title
-            document.getElementById('meditation-text').textContent = currentDecade === 0 ? 
-                "Make the Sign of the Cross" : "Contemplate this mystery"
-
-            const prayer = getCurrentPrayer()
-            const displayEl = document.getElementById('current-prayer-display')
-            displayEl.innerHTML = `<strong>${prayer.label || ''}</strong><br><br>${prayer.text}`
-
-            if (prayer.type === 'hail') {
-                document.getElementById('hail-counter').classList.remove('hidden')
+            const overlay = document.getElementById('prayer-mode')
+            overlay.classList.remove('hidden')
+            overlay.classList.add('flex')
+            
+            updatePrayerUI()
+            renderProgressDots()
+            document.getElementById('today-day').textContent = currentPrayerModeSet.day
+        }
+        
+        function endPrayerMode() {
+            const overlay = document.getElementById('prayer-mode')
+            overlay.classList.add('hidden')
+            overlay.classList.remove('flex')
+            // Celebrate with a small message
+            console.log('%c🌹 Rosary completed! May the Blessed Mother intercede for you.', 'color:#d4af77; font-family:Playfair Display')
+        }
+        
+        function updatePrayerUI() {
+            const set = currentPrayerModeSet
+            const badge = document.getElementById('current-set-badge')
+            badge.className = `px-4 py-1 text-xs rounded-3xl font-bold bg-${set.color}-400 text-[#1a1a2e]`
+            badge.textContent = set.name.toUpperCase()
+            
+            // Current mystery title
+            if (currentDecade >= 1 && currentDecade <= 5) {
+                document.getElementById('current-mystery-title').innerHTML = `
+                    Decade ${currentDecade} • <span class="text-${set.color}-300">${set.mysteries[currentDecade-1].title}</span>
+                `
+                document.getElementById('meditation-text').innerHTML = `<strong>Meditation:</strong><br>${set.mysteries[currentDecade-1].desc}`
+            } else {
+                document.getElementById('current-mystery-title').textContent = currentDecade === 0 ? 'Introductory Prayers' : 'Concluding Prayers'
+                document.getElementById('meditation-text').innerHTML = currentDecade === 0 
+                    ? 'Make the Sign of the Cross and begin in the name of the Father...' 
+                    : 'Thank the Lord and Our Lady for the graces received.'
+            }
+            
+            // Current prayer
+            const stepData = getCurrentStepData()
+            document.getElementById('current-prayer-display').innerHTML = stepData.text || 'Focus on the mystery and pray slowly.'
+            
+            // Hail counter
+            const counterDiv = document.getElementById('hail-counter')
+            if (stepData.type === 'hail') {
+                counterDiv.classList.remove('hidden')
                 updateHailCounter()
             } else {
-                document.getElementById('hail-counter').classList.add('hidden')
+                counterDiv.classList.add('hidden')
             }
-
-            renderProgressDots()
-
-            if (autoplay) {
-                if (autoplayTimeout) clearTimeout(autoplayTimeout)
-                autoplayTimeout = setTimeout(nextStep, 6500) // 6.5 seconds per prayer
+            
+            // Decade label
+            document.getElementById('decade-counter').textContent = currentDecade >= 1 && currentDecade <= 5 
+                ? `DECADE ${currentDecade} / 5` 
+                : (currentDecade === 0 ? 'INTRO' : 'CONCLUSION')
+            
+            // Next button text
+            const nextBtn = document.getElementById('next-btn')
+            const nextText = document.getElementById('next-text')
+            if (currentDecade === 5 && currentStep >= 12) {
+                nextText.textContent = 'FINISH ROSARY'
+            } else {
+                nextText.textContent = stepData.type === 'hail' ? 'NEXT HAIL MARY' : 'NEXT PRAYER'
             }
-
-            if (voiceEnabled) {
-                displayEl.classList.add('speaking')
-                setTimeout(() => displayEl.classList.remove('speaking'), 2800)
-            }
-
-            document.getElementById('next-text').textContent = (currentDecade === 5 && currentStep >= 12) ? "FINISH ROSARY" : "NEXT PRAYER"
         }
-
-        function getCurrentPrayer() {
+        
+        function getCurrentStepData() {
+            // Simple sequence logic for demo purposes
             if (currentDecade === 0) {
-                const intro = [
-                    { type: 'creed', label: "Apostles’ Creed", text: "I believe in God, the Father almighty..." },
-                    { type: 'our-father', label: "Our Father", text: "Our Father, who art in heaven..." },
-                    { type: 'hail', label: "Hail Mary", text: "Hail Mary, full of grace..." },
-                    { type: 'hail', label: "Hail Mary", text: "Hail Mary, full of grace..." },
-                    { type: 'hail', label: "Hail Mary", text: "Hail Mary, full of grace..." },
-                    { type: 'glory', label: "Glory Be", text: "Glory be to the Father..." }
+                // Introductory
+                const introSteps = [
+                    { type: 'creed', text: 'Apostles’ Creed<br><br>I believe in God...' },
+                    { type: 'our-father', text: 'Our Father...' },
+                    { type: 'hail', text: 'Hail Mary...' },
+                    { type: 'hail', text: 'Hail Mary...' },
+                    { type: 'hail', text: 'Hail Mary...' },
+                    { type: 'glory', text: 'Glory be...' },
+                    { type: 'fatima', text: 'O my Jesus...' }
                 ]
-                return intro[currentStep] || { type: 'start', text: "Begin Decade 1" }
+                return introSteps[currentStep] || { type: 'mystery-start', text: 'Begin Decade 1' }
             }
-
+            
             if (currentDecade > 5) {
-                return { type: 'conclusion', label: "Hail Holy Queen", text: "Hail, Holy Queen, Mother of Mercy..." }
+                return { type: 'conclusion', text: 'Hail Holy Queen, Mother of Mercy...' }
             }
-
-            const decade = [
-                { type: 'our-father', label: "Our Father", text: "Our Father..." },
-                ...Array(10).fill({ type: 'hail', label: "Hail Mary", text: "Hail Mary, full of grace..." }),
-                { type: 'glory', label: "Glory Be", text: "Glory be to the Father..." }
+            
+            // Decade steps
+            const decadeBase = [
+                { type: 'our-father', text: 'Our Father...' },
+                { type: 'hail', text: 'Hail Mary...' }, // 10 times
+                { type: 'hail', text: 'Hail Mary...' },
+                { type: 'hail', text: 'Hail Mary...' },
+                { type: 'hail', text: 'Hail Mary...' },
+                { type: 'hail', text: 'Hail Mary...' },
+                { type: 'hail', text: 'Hail Mary...' },
+                { type: 'hail', text: 'Hail Mary...' },
+                { type: 'hail', text: 'Hail Mary...' },
+                { type: 'hail', text: 'Hail Mary...' },
+                { type: 'hail', text: 'Hail Mary...' },
+                { type: 'glory', text: 'Glory be...' },
+                { type: 'fatima', text: 'O my Jesus...' }
             ]
-            return decade[currentStep] || { type: 'next', text: "Next decade" }
+            
+            return decadeBase[currentStep] || { type: 'mystery-start', text: 'Next decade' }
         }
-
+        
         function updateHailCounter() {
             const row = document.getElementById('bead-row')
             row.innerHTML = ''
@@ -222,12 +697,11 @@
             }
             document.getElementById('count-display').innerHTML = `<span class="text-emerald-400">${hailCount}</span> of 10`
         }
-
+        
         function nextStep() {
-            if (autoplayTimeout) clearTimeout(autoplayTimeout)
-
-            const prayer = getCurrentPrayer()
-            if (prayer.type === 'hail') {
+            const stepData = getCurrentStepData()
+            
+            if (stepData.type === 'hail') {
                 hailCount++
                 if (hailCount >= 10) {
                     hailCount = 0
@@ -236,74 +710,91 @@
             } else {
                 currentStep++
             }
-
-            if (currentDecade === 0 && currentStep >= 6) {
+            
+            // Move to next decade when finished
+            if (currentDecade === 0 && currentStep >= 7) {
                 currentDecade = 1
                 currentStep = 0
-            } else if (currentDecade >= 1 && currentDecade <= 5 && currentStep >= 12) {
+            } else if (currentDecade >= 1 && currentDecade <= 4 && currentStep >= 13) {
                 currentDecade++
                 currentStep = 0
-            } else if (currentDecade === 6) {
-                endPrayerMode()
-                return
+            } else if (currentDecade === 5 && currentStep >= 13) {
+                currentDecade = 6 // conclusion
+                currentStep = 0
             }
-
+            
             updatePrayerUI()
+            renderProgressDots()
         }
-
+        
         function prevStep() {
-            if (autoplayTimeout) clearTimeout(autoplayTimeout)
             if (currentStep > 0) {
                 currentStep--
-                if (getCurrentPrayer().type === 'hail') hailCount = Math.max(0, hailCount - 1)
+                if (getCurrentStepData().type === 'hail') hailCount = Math.max(0, hailCount - 1)
             } else if (currentDecade > 0) {
                 currentDecade--
-                currentStep = currentDecade === 0 ? 5 : 11
+                currentStep = currentDecade === 0 ? 6 : 12
             }
             updatePrayerUI()
+            renderProgressDots()
         }
-
+        
         function renderProgressDots() {
             const container = document.getElementById('progress-dots')
             container.innerHTML = ''
+            
+            // 1 intro + 5 decades + 1 conclusion
             for (let i = 0; i < 7; i++) {
                 const dot = document.createElement('div')
                 dot.className = `w-4 h-4 rounded-full ${i < currentDecade + 1 ? 'bg-amber-300' : 'bg-amber-300/20'}`
-                container.appendChild(dot)
+                container.append(dot)
             }
         }
-
-        function toggleAutoplay() {
-            autoplay = !autoplay
-            const btn = document.getElementById('autoplay-btn')
-            const text = document.getElementById('autoplay-text')
-            if (autoplay) {
-                btn.classList.add('bg-amber-300', 'text-black')
-                text.textContent = 'AUTOPLAY ON'
-                nextStep() // start immediately
+        
+        function toggleSound() {
+            const icon = document.getElementById('sound-icon')
+            if (icon.classList.contains('fa-volume-up')) {
+                icon.classList.replace('fa-volume-up', 'fa-volume-mute')
+                console.log('🔇 Muted – imagine gentle ambient chant playing')
             } else {
-                btn.classList.remove('bg-amber-300', 'text-black')
-                text.textContent = 'AUTOPLAY OFF'
-                if (autoplayTimeout) clearTimeout(autoplayTimeout)
+                icon.classList.replace('fa-volume-mute', 'fa-volume-up')
+                console.log('🔊 Sound enabled – gentle chant would play here')
             }
         }
-
-        function toggleVoice() {
-            voiceEnabled = !voiceEnabled
-            const text = document.getElementById('voice-text')
-            text.textContent = voiceEnabled ? "VOCALS ON" : "VOCALS OFF"
+        
+        // Set today’s suggested mystery on load
+        function setTodayDay() {
+            const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+            const today = new Date().getDay()
+            const dayName = days[today]
+            document.getElementById('today-day').textContent = dayName
+            
+            // Auto-suggest based on traditional schedule
+            if (today === 1 || today === 6) currentSetIndex = 0 // Joyful
+            else if (today === 4) currentSetIndex = 1 // Luminous
+            else if (today === 2 || today === 5) currentSetIndex = 2 // Sorrowful
+            else currentSetIndex = 3 // Glorious
         }
-
-        // Keyboard shortcuts
-        document.addEventListener('keydown', e => {
-            if (!document.getElementById('prayer-mode').classList.contains('flex')) return
-            if (e.key === 'ArrowRight' || e.key === ' ') nextStep()
-            if (e.key === 'ArrowLeft') prevStep()
-            if (e.key === 'Escape') endPrayerMode()
-        })
-
-        window.onload = () => {
-            console.log('%c🌹 Original First Rosary Code with Autoplay + Vocals Ready!', 'color:#d4af77; font-size:14px')
+        
+        // Keyboard support for prayer mode
+        function addKeyboardShortcuts() {
+            document.addEventListener('keydown', function(e) {
+                if (document.getElementById('prayer-mode').classList.contains('flex')) {
+                    if (e.key === 'ArrowRight') nextStep()
+                    if (e.key === 'ArrowLeft') prevStep()
+                    if (e.key === 'Escape') endPrayerMode()
+                }
+            })
+        }
+        
+        // Initialize everything
+        window.onload = function() {
+            initializeTailwind()
+            setTodayDay()
+            addKeyboardShortcuts()
+            
+            console.log('%c🌹 Creative Rosary website ready in VS Code! Open this file and live the mysteries.', 'color:#d4af77;font-size:13px')
+            console.log('Copy the entire code into a new file named index.html and open it in your browser.')
         }
     </script>
 </body>
